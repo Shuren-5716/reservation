@@ -501,20 +501,36 @@
         return [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
       };
       
-      // Calculate week days based on selected date
+      // Calculate week days based on selected date - FIXED
       const calculateWeekDays = (date) => {
         if (!date) return [];
         
-        const day = date.getDay(); // 0 = Sunday, 1 = Monday, ...
-        const mondayOffset = day === 0 ? -6 : 1 - day; // Calculate days to subtract to get to Monday
+        // Clone the date to avoid modifying the original
+        const dateCopy = new Date(date);
         
-        const monday = new Date(date);
-        monday.setDate(date.getDate() + mondayOffset);
+        // Get the day of the week (0 = Sunday, 1 = Monday, etc.)
+        const day = dateCopy.getDay();
         
+        // Calculate days to subtract to get to Monday
+        // If today is Sunday (0), go back 6 days
+        // If today is any other day, go back (day - 1) days
+        const mondayOffset = day === 0 ? -6 : 1 - day;
+        
+        // Create a new date for Monday
+        const monday = new Date(dateCopy);
+        monday.setDate(dateCopy.getDate() + mondayOffset);
+        
+        // Create an array to hold the days of the week
         const weekDays = [];
-        for (let i = 0; i < 6; i++) { // Monday to Saturday (6 days)
+        
+        // Add Monday through Saturday (6 days)
+        for (let i = 0; i < 6; i++) {
           const currentDay = new Date(monday);
           currentDay.setDate(monday.getDate() + i);
+          
+          // Ensure the date is set at the start of the day in local time
+          currentDay.setHours(0, 0, 0, 0);
+          
           weekDays.push(currentDay);
         }
         
@@ -576,7 +592,7 @@
         }
       };
       
-      // Load all reservations from Google Calendar
+      // Load all reservations from Google Calendar - FIXED
       const loadAllReservations = async () => {
         try {
           const startDate = new Date();
@@ -602,9 +618,19 @@
               const classroomReservations = result.data[classroom];
               
               classroomReservations.forEach(res => {
+                // Create a date object from the date string
+                // Make sure to use the correct format YYYY-MM-DD
+                const resDate = new Date(res.date);
+                // Ensure it's set to start of day in local time
+                resDate.setHours(0, 0, 0, 0);
+                
+                // Get the formatted date string in YYYY-MM-DD format
+                // This ensures consistency with the key format
+                const formattedDate = resDate.toISOString().split('T')[0];
+                
                 // Determine time slot based on start time
-                const startHour = new Date(res.date + "T" + res.startTime).getHours();
-                const startMinute = new Date(res.date + "T" + res.startTime).getMinutes();
+                const startTimeParts = res.startTime.split(':');
+                const startHour = parseInt(startTimeParts[0], 10);
                 
                 let timeSlot;
                 if (startHour === 8) timeSlot = "1";
@@ -617,13 +643,13 @@
                 else if (startHour === 15) timeSlot = "7";
                 else if (startHour === 16) timeSlot = "8";
                 
-                const key = `${classroom}-${res.date}-${timeSlot}`;
+                const key = `${classroom}-${formattedDate}-${timeSlot}`;
                 allReservations[key] = {
                   reserved: true,
                   name: res.name,
                   classroom: classroom,
                   timeSlot: timeSlot,
-                  date: new Date(res.date)
+                  date: resDate
                 };
               });
             }
@@ -635,13 +661,14 @@
         }
       };
       
-      // Handle reservation submission
+      // Handle reservation submission - FIXED
       const handleReservationSubmit = async () => {
         if (!modalData.name.trim()) {
           alert("Please enter your name!");
           return;
         }
         
+        // Ensure consistent date formatting
         const dateStr = modalData.date.toISOString().split('T')[0];
         const key = `${selectedClassroom}-${dateStr}-${modalData.timeSlot}`;
         
@@ -652,7 +679,7 @@
           name: modalData.name,
           classroom: selectedClassroom,
           timeSlot: modalData.timeSlot,
-          date: modalData.date
+          date: new Date(dateStr) // Create a new date to ensure consistency
         };
         
         // Update Google Calendar
@@ -686,8 +713,9 @@
         }
       };
       
-      // Handle reservation cancellation
+      // Handle reservation cancellation - FIXED
       const handleCancelReservation = async () => {
+        // Ensure consistent date formatting
         const dateStr = modalData.date.toISOString().split('T')[0];
         const key = `${selectedClassroom}-${dateStr}-${modalData.timeSlot}`;
         
@@ -717,8 +745,6 @@
             
             // Close modal
             setShowModal(false);
-            
-            // No alert for success
           } else {
             alert("Error: " + result.message);
           }
@@ -740,20 +766,22 @@
         return days[date.getDay()];
       };
       
-      // Check if time slot is reserved
+      // Check if time slot is reserved - FIXED
       const isReserved = (day, timeSlot) => {
         if (!day) return false;
         
+        // Ensure we're using a consistent date format (YYYY-MM-DD)
         const dateStr = day.toISOString().split('T')[0];
         const key = `${selectedClassroom}-${dateStr}-${timeSlot}`;
         
         return reservations[key] && reservations[key].reserved;
       };
       
-      // Get reservation info
+      // Get reservation info - FIXED
       const getReservationInfo = (day, timeSlot) => {
         if (!day) return null;
         
+        // Ensure we're using a consistent date format (YYYY-MM-DD)
         const dateStr = day.toISOString().split('T')[0];
         const key = `${selectedClassroom}-${dateStr}-${timeSlot}`;
         
