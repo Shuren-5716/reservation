@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classroom Reservation System</title>
+  <!-- Load React directly from CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Load Babel for JSX support -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    
+    body {
+      padding: 10px;
+      background-color: #f5f5f5;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      width: 100%;
+    }
+    
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+      font-size: 1.8rem;
+    }
+    
+    h2 {
+      font-size: 1.3rem;
+    }
+    
+    h3 {
+      font-size: 1.1rem;
+    }
+    
+    .steps {
+      margin-bottom: 20px;
+    }
+    
+    .step {
+      margin-bottom: 20px;
+    }
+    
+    .step-header {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .step-number {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      background-color: #4285f4;
+      color: white;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 30px;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    
+    .classroom-selector {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .classroom-btn {
+      padding: 10px 20px;
+      border: 2px solid #4285f4;
+      background-color: white;
+      color: #4285f4;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+      flex-grow: 1;
+      text-align: center;
+      min-width: 80px;
+    }
+    
+    .classroom-btn.selected {
+      background-color: #4285f4;
+      color: white;
+    }
+    
+    .date-picker {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      margin-top: 10px;
+      min-width: 280px;
+    }
+    
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    .calendar-nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .calendar-day {
+      text-align: center;
+      padding: 8px 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    
+    .calendar-day.selected {
+      background-color: #4285f4;
+      color: white;
+    }
+    
+    .calendar-day.other-month {
+      color: #aaa;
+    }
+    
+    .week-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      min-width: 500px;
+    }
+    
+    .week-table-container {
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+    
+    .week-table th, .week-table td {
+      border: 1px solid #ddd;
+      padding: 8px 5px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    
+    .week-table th {
+      background-color: #f2f2f2;
+    }
+    
+    .week-table td {
+      height: 50px;
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .week-table td:hover {
+      background-color: #f9f9f9;
+    }
+    
+    .week-table td.selected {
+      background-color: #e6f3ff;
+    }
+    
+    .week-nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    .btn {
+      padding: 8px 16px;
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+    
+    .btn:hover {
+      background-color: #3367d6;
+    }
+    
+    .btn:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .reservation-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .modal-content {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .reservation-item {
+      font-size: 11px;
+      padding: 3px;
+      background-color: #4285f4;
+      color: white;
+      border-radius: 3px;
+      margin-bottom: 2px;
+      word-break: break-word;
+    }
+    
+    .time-slot {
+      font-weight: bold;
+    }
+    
+    .step-disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    
+    .recurring-options {
+      margin-top: 10px;
+    }
+    
+    .auth-note {
+      text-align: center;
+      margin-top: 20px;
+      font-style: italic;
+      color: #666;
+      font-size: 0.9rem;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .container {
+        padding: 10px;
+      }
+      
+      h1 {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+      }
+      
+      h2 {
+        font-size: 1.1rem;
+      }
+      
+      h3 {
+        font-size: 1rem;
+      }
+      
+      .step-header {
+        font-size: 14px;
+      }
+      
+      .step-number {
+        width: 25px;
+        height: 25px;
+        line-height: 25px;
+        font-size: 14px;
+      }
+      
+      .classroom-btn {
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+      
+      .btn {
+        padding: 6px 10px;
+        font-size: 14px;
+      }
+      
+      .calendar-day {
+        padding: 5px 2px;
+        font-size: 12px;
+      }
+      
+      .week-table th, .week-table td {
+        padding: 5px 2px;
+        font-size: 12px;
+      }
+      
+      .week-table td {
+        height: 40px;
+      }
+      
+      .reservation-item {
+        font-size: 10px;
+        padding: 2px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .calendar {
+        grid-template-columns: repeat(7, minmax(30px, 1fr));
+      }
+      
+      .calendar-day {
+        padding: 4px 1px;
+        font-size: 11px;
+      }
+      
+      .calendar-nav {
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      .week-nav .btn {
+        padding: 5px 8px;
+        font-size: 12px;
+      }
+      
+      .modal-content {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root">Loading...</div>
+  
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    
+    const App = () => {
+      // State for each step
+      const [selectedClassroom, setSelectedClassroom] = useState(null);
+      const [selectedDate, setSelectedDate] = useState(null);
+      const [currentMonth, setCurrentMonth] = useState(new Date());
+      const [weekDays, setWeekDays] = useState([]);
+      const [reservations, setReservations] = useState({});
+      const [showModal, setShowModal] = useState(false);
+      const [modalData, setModalData] = useState({
+        date: null,
+        timeSlot: null,
+        name: ""
+      });
+      
+      // Classroom options
+      const classrooms = ["情境", "語一", "語二"];
+      
+      // Time slot mapping
+      const timeSlots = {
+        "1": "1",
+        "2": "2",
+        "3": "3",
+        "4": "4",
+        "noon": "noon",
+        "5": "5",
+        "6": "6",
+        "7": "7",
+        "8": "8"
+      };
+      
+      // Google Calendar IDs for each classroom
+      const calendarIds = {
+        "情境": "c_7db8c9240caf122c18189360a9f93189732c9b83bee9f7d73ca8f46bd7a14974@group.calendar.google.com",
+        "語一": "c_e62c1293d589b334e428cef1778757c396060650f0443df80ad9c16bf46adac2@group.calendar.google.com",
+        "語二": "c_2dce52e6c6b89968f25bb76b7e3712b4b47b5b1ca28f50329775f268b3716fcc@group.calendar.google.com"
+      };
+      
+      // Replace this with your Google Apps Script URL
+      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztN1PVWX6W8fQ7eWyEk5ieyMWuu-vN-9x5qVZe55rS36aTYxoG_p3YlbWPFw1PqT3uyQ/exec";
+      
+      // Real time mapping for Google Calendar integration
+      const realTimeMap = {
+        "1": { start: "08:00", end: "08:50" },
+        "2": { start: "09:10", end: "10:00" },
+        "3": { start: "10:10", end: "11:00" },
+        "4": { start: "11:10", end: "12:00" },
+        "noon": { start: "12:00", end: "13:00" },
+        "5": { start: "13:05", end: "13:55" },
+        "6": { start: "14:05", end: "14:55" },
+        "7": { start: "15:05", end: "15:55" },
+        "8": { start: "16:00", end: "16:50" }
+      };
+      
+      // Get days for current month
+      const getDaysInMonth = (date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        
+        // Get prev month days to fill start of calendar
+        const prevMonthDays = [];
+        const firstDayOfWeek = firstDay.getDay(); // 0 = Sunday
+        const firstDayAdjusted = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1; // Convert to Monday = 0
+        
+        for (let i = firstDayAdjusted - 1; i >= 0; i--) {
+          const prevDate = new Date(year, month, -i);
+          prevMonthDays.push({
+            date: prevDate,
+            currentMonth: false
+          });
+        }
+        
+        // Current month days
+        const currentMonthDays = [];
+        for (let i = 1; i <= lastDay.getDate(); i++) {
+          const currentDate = new Date(year, month, i);
+          currentMonthDays.push({
+            date: currentDate,
+            currentMonth: true
+          });
+        }
+        
+        // Next month days to fill end of calendar
+        const nextMonthDays = [];
+        const totalDaysSoFar = prevMonthDays.length + currentMonthDays.length;
+        const daysToAdd = 42 - totalDaysSoFar; // 6 rows of 7 days
+        
+        for (let i = 1; i <= daysToAdd; i++) {
+          const nextDate = new Date(year, month + 1, i);
+          nextMonthDays.push({
+            date: nextDate,
+            currentMonth: false
+          });
+        }
+        
+        return [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
+      };
+      
+      // Calculate week days based on selected date
+      const calculateWeekDays = (date) => {
+        if (!date) return [];
+        
+        const day = date.getDay(); // 0 = Sunday, 1 = Monday, ...
+        const mondayOffset = day === 0 ? -6 : 1 - day; // Calculate days to subtract to get to Monday
+        
+        const monday = new Date(date);
+        monday.setDate(date.getDate() + mondayOffset);
+        
+        const weekDays = [];
+        for (let i = 0; i < 6; i++) { // Monday to Saturday (6 days)
+          const currentDay = new Date(monday);
+          currentDay.setDate(monday.getDate() + i);
+          weekDays.push(currentDay);
+        }
+        
+        return weekDays;
+      };
+      
+      // Change month
+      const changeMonth = (increment) => {
+        const newMonth = new Date(currentMonth);
+        newMonth.setMonth(newMonth.getMonth() + increment);
+        setCurrentMonth(newMonth);
+      };
+      
+      // Change week
+      const changeWeek = (increment) => {
+        if (!selectedDate) return;
+        
+        const newDate = new Date(selectedDate);
+        newDate.setDate(newDate.getDate() + (increment * 7));
+        setSelectedDate(newDate);
+      };
+      
+      // Handle classroom selection
+      const handleClassroomSelect = (classroom) => {
+        setSelectedClassroom(classroom);
+        // Reset subsequent selections
+        setSelectedDate(null);
+      };
+      
+      // Handle date selection
+      const handleDateSelect = (date) => {
+        setSelectedDate(date);
+      };
+      
+      // Handle time slot selection
+      const handleTimeSlotSelect = (day, timeSlot) => {
+        if (!selectedClassroom || !selectedDate) return;
+        
+        const dateStr = day.toISOString().split('T')[0];
+        const key = `${selectedClassroom}-${dateStr}-${timeSlot}`;
+        
+        // If already reserved by current user
+        if (reservations[key] && reservations[key].reserved) {
+          // Show modal with existing data for editing/cancellation
+          setModalData({
+            date: day,
+            timeSlot,
+            name: reservations[key].name
+          });
+          setShowModal(true);
+        } else {
+          // Show modal for new reservation
+          setModalData({
+            date: day,
+            timeSlot,
+            name: ""
+          });
+          setShowModal(true);
+        }
+      };
+      
+      // Load all reservations from Google Calendar
+      const loadAllReservations = async () => {
+        try {
+          const startDate = new Date();
+          const endDate = new Date();
+          endDate.setMonth(endDate.getMonth() + 3); // Get 3 months of data
+          
+          const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'getAll',
+              startDate: startDate.toISOString(),
+              endDate: endDate.toISOString()
+            })
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            const allReservations = {};
+            
+            // Process reservations from each classroom
+            for (const classroom in result.data) {
+              const classroomReservations = result.data[classroom];
+              
+              classroomReservations.forEach(res => {
+                // Determine time slot based on start time
+                const startHour = new Date(res.date + "T" + res.startTime).getHours();
+                const startMinute = new Date(res.date + "T" + res.startTime).getMinutes();
+                
+                let timeSlot;
+                if (startHour === 8) timeSlot = "1";
+                else if (startHour === 9) timeSlot = "2";
+                else if (startHour === 10) timeSlot = "3";
+                else if (startHour === 11) timeSlot = "4";
+                else if (startHour === 12) timeSlot = "noon";
+                else if (startHour === 13) timeSlot = "5";
+                else if (startHour === 14) timeSlot = "6";
+                else if (startHour === 15) timeSlot = "7";
+                else if (startHour === 16) timeSlot = "8";
+                
+                const key = `${classroom}-${res.date}-${timeSlot}`;
+                allReservations[key] = {
+                  reserved: true,
+                  name: res.name,
+                  classroom: classroom,
+                  timeSlot: timeSlot,
+                  date: new Date(res.date)
+                };
+              });
+            }
+            
+            setReservations(allReservations);
+          }
+        } catch (error) {
+          console.error("Error loading reservations:", error);
+        }
+      };
+      
+      // Handle reservation submission
+      const handleReservationSubmit = async () => {
+        if (!modalData.name.trim()) {
+          alert("Please enter your name!");
+          return;
+        }
+        
+        const dateStr = modalData.date.toISOString().split('T')[0];
+        const key = `${selectedClassroom}-${dateStr}-${modalData.timeSlot}`;
+        
+        // Add to local state first for immediate UI update
+        const updatedReservations = { ...reservations };
+        updatedReservations[key] = {
+          reserved: true,
+          name: modalData.name,
+          classroom: selectedClassroom,
+          timeSlot: modalData.timeSlot,
+          date: modalData.date
+        };
+        
+        // Update Google Calendar
+        try {
+          const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'add',
+              name: modalData.name,
+              classroom: selectedClassroom,
+              date: dateStr,
+              timeSlot: modalData.timeSlot,
+              startTime: realTimeMap[modalData.timeSlot].start,
+              endTime: realTimeMap[modalData.timeSlot].end
+            })
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            // Update reservations state
+            setReservations(updatedReservations);
+            setShowModal(false);
+            // No alert for success
+          } else {
+            alert("Error: " + result.message);
+          }
+        } catch (error) {
+          console.error("Error submitting reservation:", error);
+          alert("Error submitting reservation. Please try again.");
+        }
+      };
+      
+      // Handle reservation cancellation
+      const handleCancelReservation = async () => {
+        const dateStr = modalData.date.toISOString().split('T')[0];
+        const key = `${selectedClassroom}-${dateStr}-${modalData.timeSlot}`;
+        
+        try {
+          const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'cancel',
+              name: modalData.name,
+              classroom: selectedClassroom,
+              date: dateStr,
+              timeSlot: modalData.timeSlot,
+              startTime: realTimeMap[modalData.timeSlot].start,
+              endTime: realTimeMap[modalData.timeSlot].end
+            })
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            // Update local state
+            const updatedReservations = { ...reservations };
+            delete updatedReservations[key];
+            
+            // Update reservations state
+            setReservations(updatedReservations);
+            
+            // Close modal
+            setShowModal(false);
+            
+            // No alert for success
+          } else {
+            alert("Error: " + result.message);
+          }
+        } catch (error) {
+          console.error("Error cancelling reservation:", error);
+          alert("Error cancelling reservation. Please try again.");
+        }
+      };
+      
+      // Format date for display
+      const formatDate = (date) => {
+        if (!date) return "";
+        return `${date.getMonth() + 1}/${date.getDate()}`;
+      };
+      
+      // Format day name
+      const formatDay = (date) => {
+        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        return days[date.getDay()];
+      };
+      
+      // Check if time slot is reserved
+      const isReserved = (day, timeSlot) => {
+        if (!day) return false;
+        
+        const dateStr = day.toISOString().split('T')[0];
+        const key = `${selectedClassroom}-${dateStr}-${timeSlot}`;
+        
+        return reservations[key] && reservations[key].reserved;
+      };
+      
+      // Get reservation info
+      const getReservationInfo = (day, timeSlot) => {
+        if (!day) return null;
+        
+        const dateStr = day.toISOString().split('T')[0];
+        const key = `${selectedClassroom}-${dateStr}-${timeSlot}`;
+        
+        return reservations[key];
+      };
+      
+      // Update week days when selected date changes
+      useEffect(() => {
+        if (selectedDate) {
+          setWeekDays(calculateWeekDays(selectedDate));
+        }
+      }, [selectedDate]);
+      
+      // Load reservations when the component mounts
+      useEffect(() => {
+        loadAllReservations();
+      }, []);
+      
+      return (
+        <div className="container">
+          <h1>Classroom Reservation System</h1>
+          
+          <div className="steps">
+            {/* Step 1: Classroom Selection */}
+            <div className="step">
+              <div className="step-header">
+                <span className="step-number">1</span>
+                <h2>Select Classroom</h2>
+              </div>
+              <div className="classroom-selector">
+                {classrooms.map(classroom => (
+                  <button
+                    key={classroom}
+                    className={`classroom-btn ${selectedClassroom === classroom ? 'selected' : ''}`}
+                    onClick={() => handleClassroomSelect(classroom)}
+                  >
+                    {classroom}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Step 2: Date Selection */}
+            <div className={`step ${!selectedClassroom ? 'step-disabled' : ''}`}>
+              <div className="step-header">
+                <span className="step-number">2</span>
+                <h2>Select Date</h2>
+              </div>
+              {selectedClassroom && (
+                <div className="date-picker">
+                  <div className="calendar-header">
+                    <h3>{`${currentMonth.getFullYear()}年 ${currentMonth.getMonth() + 1}月`}</h3>
+                    <div className="calendar-nav">
+                      <button className="btn" onClick={() => changeMonth(-1)}>Prev</button>
+                      <button className="btn" onClick={() => changeMonth(1)}>Next</button>
+                    </div>
+                  </div>
+                  <div className="calendar">
+                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                      <div key={day} className="calendar-day">{day}</div>
+                    ))}
+                    {getDaysInMonth(currentMonth).map((day, index) => (
+                      <div
+                        key={index}
+                        className={`calendar-day ${day.currentMonth ? '' : 'other-month'} ${
+                          selectedDate &&
+                          day.date.getDate() === selectedDate.getDate() &&
+                          day.date.getMonth() === selectedDate.getMonth() &&
+                          day.date.getFullYear() === selectedDate.getFullYear()
+                            ? 'selected'
+                            : ''
+                        }`}
+                        onClick={() => handleDateSelect(day.date)}
+                      >
+                        {day.date.getDate()}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Step 3: Week Table */}
+            <div className={`step ${!selectedDate ? 'step-disabled' : ''}`}>
+              <div className="step-header">
+                <span className="step-number">3</span>
+                <h2>Select Time Slot</h2>
+              </div>
+              {selectedDate && (
+                <>
+                  <div className="week-nav">
+                    <button className="btn" onClick={() => changeWeek(-1)}>Prev Week</button>
+                    <h3>{`${selectedDate.getFullYear()}年 ${selectedDate.getMonth() + 1}月 Week of ${formatDate(weekDays[0])} - ${selectedClassroom} 教室`}</h3>
+                    <button className="btn" onClick={() => changeWeek(1)}>Next Week</button>
+                  </div>
+                  
+                  <div className="week-table-container">
+                    <table className="week-table">
+                      <thead>
+                        <tr>
+                          <th>Time</th>
+                          {weekDays.map((day, index) => (
+                            <th key={index}>{`${formatDay(day)} ${formatDate(day)}`}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {["1", "2", "3", "4", "noon", "5", "6", "7", "8"].map((timeSlot) => (
+                          <tr key={timeSlot}>
+                            <td className="time-slot">{timeSlots[timeSlot]}</td>
+                            {weekDays.map((day, index) => (
+                              <td
+                                key={index}
+                                className={isReserved(day, timeSlot) ? 'selected' : ''}
+                                onClick={() => handleTimeSlotSelect(day, timeSlot)}
+                              >
+                                {isReserved(day, timeSlot) && (
+                                  <div className="reservation-item">
+                                    {getReservationInfo(day, timeSlot).name}
+                                  </div>
+                                )}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+          
+          {/* Reservation Modal */}
+          {showModal && (
+            <div className="reservation-modal">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h2>Enter Your Name</h2>
+                  <button className="close-btn" onClick={() => setShowModal(false)}>×</button>
+                </div>
+                
+                <div className="form-group">
+                  <label>Your Name:</label>
+                  <input
+                    type="text"
+                    value={modalData.name}
+                    onChange={(e) => setModalData({ ...modalData, name: e.target.value })}
+                    placeholder="Enter your name"
+                    autoFocus
+                  />
+                </div>
+                
+                <div className="modal-actions">
+                  {getReservationInfo(modalData.date, modalData.timeSlot) && (
+                    <button className="btn" onClick={handleCancelReservation}>
+                      Cancel Reservation
+                    </button>
+                  )}
+                  <button className="btn" onClick={handleReservationSubmit}>
+                    {getReservationInfo(modalData.date, modalData.timeSlot) ? 'Update' :'Reserve'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="auth-note">
+            This reservation system is open to anyone with the link.
+          </div>
+        </div>
+      );
+    };
+    
+    // Render the App component to the root div
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
